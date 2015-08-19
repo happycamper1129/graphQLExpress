@@ -61,6 +61,7 @@
     "chai": "3.2.0",
     "coveralls": "2.11.4",
     "eslint": "1.1.0",
+    "eslint-plugin-babel": "2.1.1",
     "express": "4.13.3",
     "express3": "*",
     "flow-bin": "0.14.0",
