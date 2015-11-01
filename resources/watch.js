@@ -6,7 +6,6 @@
  *  LICENSE file in the root directory of this source tree. An additional grant
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
-/* eslint-disable no-console */
 
 import sane from 'sane';
 import { resolve as resolvePath } from 'path';
@@ -22,7 +21,7 @@ var srcDir = resolvePath(cmd, './src');
 function exec(command, options) {
   return new Promise(function (resolve, reject) {
     var child = spawn(command, options, {
-      cmd,
+      cmd: cmd,
       env: process.env,
       stdio: 'inherit'
     });
@@ -36,12 +35,12 @@ function exec(command, options) {
   });
 }
 
-var flowServer = spawn(flowBinPath, [ 'server' ], {
-  cmd,
+var flowServer = spawn(flowBinPath, ['server'], {
+  cmd: cmd,
   env: process.env
 });
 
-var watcher = sane(srcDir, { glob: [ '**/*.js', '**/*.graphql' ] })
+var watcher = sane(srcDir, { glob: ['**/*.js', '**/*.graphql'] })
   .on('ready', startWatch)
   .on('add', changeFile)
   .on('delete', deleteFile)
@@ -135,8 +134,7 @@ function runTests(filepaths) {
     '--reporter', 'progress',
     '--require', 'resources/mocha-bootload'
   ].concat(
-    allTests(filepaths) ? filepaths.map(srcPath) :
-      [ 'src/**/__tests__/**/*.js' ]
+    allTests(filepaths) ? filepaths.map(srcPath) : ['src/**/__tests__/**/*.js']
   )).catch(() => false);
 }
 
@@ -146,11 +144,10 @@ function lintFiles(filepaths) {
   return filepaths.reduce((prev, filepath) => prev.then(prevSuccess => {
     if (isJS(filepath)) {
       process.stdout.write('  ' + filepath + ' ...');
-      return exec('eslint', [ srcPath(filepath) ])
+      return exec('eslint', [srcPath(filepath)])
         .catch(() => false)
         .then(success => {
-          let msg = CLEARLINE + '  ' + (success ? CHECK : X) + ' ' + filepath;
-          console.log(msg);
+          console.log(CLEARLINE + '  ' + (success ? CHECK : X) + ' ' + filepath);
           return prevSuccess && success;
         });
     }
@@ -160,7 +157,7 @@ function lintFiles(filepaths) {
 
 function typecheckStatus() {
   console.log('\nType Checking\n');
-  return exec(flowBinPath, [ 'status' ]).catch(() => false);
+  return exec(flowBinPath, ['status']).catch(() => false);
 }
 
 // Filepath
@@ -180,7 +177,7 @@ function allTests(filepaths) {
 }
 
 function isTest(filepath) {
-  return isJS(filepath) && filepath.indexOf('__tests__/') !== -1;
+  return isJS(filepath) && ~filepath.indexOf('__tests__/');
 }
 
 // Print helpers
