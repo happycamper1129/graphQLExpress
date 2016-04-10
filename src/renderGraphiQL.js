@@ -142,7 +142,7 @@ add "&raw" to the end of the URL within a browser.
     }
 
     // Render <GraphiQL /> into the body.
-    ReactDOM.render(
+    React.render(
       React.createElement(GraphiQL, {
         fetcher: graphQLFetcher,
         onEditQuery: onEditQuery,
