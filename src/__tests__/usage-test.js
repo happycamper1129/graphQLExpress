@@ -28,11 +28,11 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object', async () => {
-    const app = express();
+    var app = express();
 
     app.use('/graphql', graphqlHTTP(() => null));
 
-    let caughtError;
+    var caughtError;
     try {
       await request(app).get('/graphql?query={test}');
     } catch (error) {
@@ -49,11 +49,11 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object or promise of object', async () => {
-    const app = express();
+    var app = express();
 
     app.use('/graphql', graphqlHTTP(() => Promise.resolve(null)));
 
-    let caughtError;
+    var caughtError;
     try {
       await request(app).get('/graphql?query={test}');
     } catch (error) {
@@ -70,11 +70,11 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object with schema', async () => {
-    const app = express();
+    var app = express();
 
     app.use('/graphql', graphqlHTTP(() => ({})));
 
-    let caughtError;
+    var caughtError;
     try {
       await request(app).get('/graphql?query={test}');
     } catch (error) {
@@ -90,11 +90,11 @@ describe('Useful errors when incorrectly used', () => {
   });
 
   it('requires option factory function to return object or promise of object with schema', async () => {
-    const app = express();
+    var app = express();
 
     app.use('/graphql', graphqlHTTP(() => Promise.resolve({})));
 
-    let caughtError;
+    var caughtError;
     try {
       await request(app).get('/graphql?query={test}');
     } catch (error) {
