@@ -16,7 +16,7 @@ type GraphiQLData = {
 };
 
 // Current latest version of GraphiQL.
-const GRAPHIQL_VERSION = '0.7.0';
+const GRAPHIQL_VERSION = '0.7.1';
 
 // Ensures string values are save to be used within a <script> tag.
 function safeSerialize(data) {
@@ -50,6 +50,9 @@ add "&raw" to the end of the URL within a browser.
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
+  <title>GraphiQL</title>
+  <meta name="robots" content="noindex" />
   <style>
     html, body {
       height: 100%;

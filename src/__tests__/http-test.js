@@ -214,7 +214,7 @@ describe('test harness', () => {
         const error = await catchError(
           request(app)
             .get(urlString({
-              query: `{ test, unknownOne, unknownTwo }`
+              query: '{ test, unknownOne, unknownTwo }'
             }))
         );
 
@@ -863,6 +863,28 @@ describe('test harness', () => {
           '{"data":{"test":"Hello World"}}'
         );
       });
+    });
+
+    it('will send request and response when using thunk', async () => {
+      const app = express();
+
+      let hasRequest = false;
+      let hasResponse = false;
+
+      app.use(urlString(), graphqlHTTP((req, res) => {
+        if (req) {
+          hasRequest = true;
+        }
+        if (res) {
+          hasResponse = true;
+        }
+        return { schema: TestSchema };
+      }));
+
+      await request(app).get(urlString({ query: '{test}' }));
+
+      expect(hasRequest).to.equal(true);
+      expect(hasResponse).to.equal(true);
     });
 
     describe('Error handling functionality', () => {
