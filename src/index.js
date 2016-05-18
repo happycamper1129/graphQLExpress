@@ -105,11 +105,7 @@ export default function graphqlHTTP(options: Options): Middleware {
 
     // Resolve the Options to get OptionsData.
     new Promise(resolve => {
-      resolve(
-        typeof options === 'function' ?
-          options(request, response) :
-          options
-      );
+      resolve(typeof options === 'function' ? options(request) : options);
     }).then(optionsData => {
       // Assert that optionsData is in fact an Object.
       if (!optionsData || typeof optionsData !== 'object') {
