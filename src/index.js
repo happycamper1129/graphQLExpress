@@ -106,7 +106,7 @@ export default function graphqlHTTP(options: Options): Middleware {
     // the asyncronous process below.
 
     // Resolve the Options to get OptionsData.
-    new Promise(resolve => {
+    return new Promise(resolve => {
       resolve(
         typeof options === 'function' ?
           options(request, response) :
@@ -241,12 +241,14 @@ export default function graphqlHTTP(options: Options): Middleware {
           operationName, result
         });
         response.setHeader('Content-Type', 'text/html');
-        response.end(data);
+        response.write(data);
+        response.end();
       } else {
         // Otherwise, present JSON directly.
         const data = JSON.stringify(result, null, pretty ? 2 : 0);
         response.setHeader('Content-Type', 'application/json');
-        response.end(data);
+        response.write(data);
+        response.end();
       }
     });
   };
