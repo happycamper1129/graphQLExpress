@@ -76,7 +76,7 @@ export type OptionsData = {
   graphiql?: ?boolean,
 };
 
-type Middleware = (request: Request, response: Response) => Promise<void>;
+type Middleware = (request: Request, response: Response) => void;
 
 /**
  * Middleware for express; takes an options object or function as input to
@@ -106,7 +106,7 @@ export default function graphqlHTTP(options: Options): Middleware {
     // the asyncronous process below.
 
     // Resolve the Options to get OptionsData.
-    return new Promise(resolve => {
+    new Promise(resolve => {
       resolve(
         typeof options === 'function' ?
           options(request, response) :
@@ -240,13 +240,13 @@ export default function graphqlHTTP(options: Options): Middleware {
           query, variables,
           operationName, result
         });
-        response.setHeader('Content-Type', 'text/html');
+        response.setHeader('Content-Type', 'text/html; charset=utf-8');
         response.write(data);
         response.end();
       } else {
         // Otherwise, present JSON directly.
         const data = JSON.stringify(result, null, pretty ? 2 : 0);
-        response.setHeader('Content-Type', 'application/json');
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
         response.write(data);
         response.end();
       }
