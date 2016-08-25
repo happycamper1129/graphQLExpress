@@ -28,7 +28,7 @@ import type { Request, Response } from 'express';
 
 
 /**
- * Used to configure the graphQLHTTP middleware by providing a schema
+ * Used to configure the graphqlHTTP middleware by providing a schema
  * and other configuration options.
  *
  * Options can be provided as an Object, a Promise for an Object, or a Function
@@ -76,7 +76,7 @@ export type OptionsData = {
   graphiql?: ?boolean,
 };
 
-type Middleware = (request: Request, response: Response) => void;
+type Middleware = (request: Request, response: Response) => Promise<void>;
 
 /**
  * Middleware for express; takes an options object or function as input to
@@ -89,7 +89,7 @@ export default function graphqlHTTP(options: Options): Middleware {
 
   return (request: Request, response: Response) => {
     // Higher scoped variables are referred to at various stages in the
-    // asyncronous state machine below.
+    // asynchronous state machine below.
     let schema;
     let context;
     let rootValue;
@@ -103,10 +103,10 @@ export default function graphqlHTTP(options: Options): Middleware {
     let validationRules;
 
     // Promises are used as a mechanism for capturing any thrown errors during
-    // the asyncronous process below.
+    // the asynchronous process below.
 
     // Resolve the Options to get OptionsData.
-    new Promise(resolve => {
+    return new Promise(resolve => {
       resolve(
         typeof options === 'function' ?
           options(request, response) :
@@ -130,7 +130,7 @@ export default function graphqlHTTP(options: Options): Middleware {
 
       // Collect information from the options data object.
       schema = optionsData.schema;
-      context = optionsData.context;
+      context = optionsData.context || request;
       rootValue = optionsData.rootValue;
       pretty = optionsData.pretty;
       graphiql = optionsData.graphiql;
@@ -240,15 +240,13 @@ export default function graphqlHTTP(options: Options): Middleware {
           query, variables,
           operationName, result
         });
-        response.setHeader('Content-Type', 'text/html');
-        response.write(data);
-        response.end();
+        response.setHeader('Content-Type', 'text/html; charset=utf-8');
+        response.end(data);
       } else {
         // Otherwise, present JSON directly.
         const data = JSON.stringify(result, null, pretty ? 2 : 0);
-        response.setHeader('Content-Type', 'application/json');
-        response.write(data);
-        response.end();
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
+        response.end(data);
       }
     });
   };
