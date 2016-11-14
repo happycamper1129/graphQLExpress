@@ -46,9 +46,7 @@ export type Request = {
  * Options can be provided as an Object, a Promise for an Object, or a Function
  * that returns an Object or a Promise for an Object.
  */
-export type Options =
-  ((request: Request, response: Response) => OptionsResult)
-  | OptionsResult;
+export type Options = ((request: Request) => OptionsResult) | OptionsResult;
 export type OptionsResult = OptionsData | Promise<OptionsData>;
 export type OptionsData = {
   /**
