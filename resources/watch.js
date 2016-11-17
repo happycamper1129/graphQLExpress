@@ -16,12 +16,12 @@ const flowBinPath = require('flow-bin');
 
 process.env.PATH += ':./node_modules/.bin';
 
-const cmd = resolvePath(__dirname);
-const srcDir = resolvePath(cmd, '../src');
+var cmd = resolvePath(__dirname);
+var srcDir = resolvePath(cmd, '../src');
 
 function exec(command, options) {
   return new Promise(function (resolve, reject) {
-    const child = spawn(command, options, {
+    var child = spawn(command, options, {
       cmd,
       env: process.env,
       stdio: 'inherit'
@@ -36,12 +36,12 @@ function exec(command, options) {
   });
 }
 
-const flowServer = spawn(flowBinPath, [ 'server' ], {
+var flowServer = spawn(flowBinPath, [ 'server' ], {
   cmd,
   env: process.env
 });
 
-const watcher = sane(srcDir, { glob: [ '**/*.js', '**/*.graphql' ] })
+var watcher = sane(srcDir, { glob: [ '**/*.js', '**/*.graphql' ] })
   .on('ready', startWatch)
   .on('add', changeFile)
   .on('delete', deleteFile)
@@ -54,10 +54,10 @@ process.on('SIGINT', function () {
   process.exit();
 });
 
-let isChecking;
-let needsCheck;
-let toCheck = {};
-let timeout;
+var isChecking;
+var needsCheck;
+var toCheck = {};
+var timeout;
 
 function startWatch() {
   process.stdout.write(CLEARSCREEN + green(invert('watching...')));
@@ -86,7 +86,7 @@ function guardedCheck() {
     return;
   }
   isChecking = true;
-  const filepaths = Object.keys(toCheck);
+  var filepaths = Object.keys(toCheck);
   toCheck = {};
   needsCheck = false;
   checkFiles(filepaths).then(() => {
@@ -149,7 +149,7 @@ function lintFiles(filepaths) {
       return exec('eslint', [ srcPath(filepath) ])
         .catch(() => false)
         .then(success => {
-          const msg = CLEARLINE + '  ' + (success ? CHECK : X) + ' ' + filepath;
+          let msg = CLEARLINE + '  ' + (success ? CHECK : X) + ' ' + filepath;
           console.log(msg);
           return prevSuccess && success;
         });
@@ -185,10 +185,10 @@ function isTest(filepath) {
 
 // Print helpers
 
-const CLEARSCREEN = '\u001b[2J';
-const CLEARLINE = '\r\x1B[K';
-const CHECK = green('\u2713');
-const X = red('\u2718');
+var CLEARSCREEN = '\u001b[2J';
+var CLEARLINE = '\r\x1B[K';
+var CHECK = green('\u2713');
+var X = red('\u2718');
 
 function invert(str) {
   return `\u001b[7m ${str} \u001b[27m`;
