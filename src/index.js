@@ -59,11 +59,6 @@ export type OptionsData = {
   rootValue?: ?mixed,
 
   /**
-   * A boolean to configure whether the output should be pretty-printed.
-   */
-  pretty?: ?boolean,
-
-  /**
    * An optional function which will be used to format any errors produced by
    * fulfilling a GraphQL operation. If no function is provided, GraphQL's
    * default spec-compliant `formatError` function will be used.
@@ -119,6 +114,11 @@ export type RequestInfo = {
   result: ?mixed;
 };
 
+export type ExecutionResult = {
+  data?: ?{[key: string]: mixed};
+  errors?: Array<GraphQLError>;
+};
+
 type Middleware = (request: $Request, response: $Response) => Promise<void>;
 
 /**
@@ -134,29 +134,29 @@ function graphqlHTTP(options: Options): Middleware {
   return (request: $Request, response: $Response) => {
     // Higher scoped variables are referred to at various stages in the
     // asynchronous state machine below.
-    let params;
-    let pretty;
+    let schema;
+    let context;
+    let rootValue;
+    let graphiql;
     let formatErrorFn;
     let extensionsFn;
     let showGraphiQL;
     let query;
-
     let documentAST;
     let variables;
     let operationName;
+    let validationRules;
 
     // Promises are used as a mechanism for capturing any thrown errors during
     // the asynchronous process below.
 
-    // Parse the Request to get GraphQL request parameters.
-    return getGraphQLParams(request).then(graphQLParams => {
-      params = graphQLParams;
-      // Then, resolve the Options to get OptionsData.
-      return new Promise(resolve => resolve(
+    // Resolve the Options to get OptionsData.
+    return new Promise(resolve => {
+      resolve(
         typeof options === 'function' ?
-          options(request, response, params) :
+          options(request, response) :
           options
-      ));
+      );
     }).then(optionsData => {
       // Assert that optionsData is in fact an Object.
       if (!optionsData || typeof optionsData !== 'object') {
@@ -174,15 +174,14 @@ function graphqlHTTP(options: Options): Middleware {
       }
 
       // Collect information from the options data object.
-      const schema = optionsData.schema;
-      const context = optionsData.context || request;
-      const rootValue = optionsData.rootValue;
-      const graphiql = optionsData.graphiql;
-      pretty = optionsData.pretty;
+      schema = optionsData.schema;
+      context = optionsData.context || request;
+      rootValue = optionsData.rootValue;
+      graphiql = optionsData.graphiql;
       formatErrorFn = optionsData.formatError;
       extensionsFn = optionsData.extensions;
 
-      let validationRules = specifiedRules;
+      validationRules = specifiedRules;
       if (optionsData.validationRules) {
         validationRules = validationRules.concat(optionsData.validationRules);
       }
@@ -193,6 +192,9 @@ function graphqlHTTP(options: Options): Middleware {
         throw httpError(405, 'GraphQL only supports GET and POST requests.');
       }
 
+      // Parse the Request to get GraphQL request parameters.
+      return getGraphQLParams(request);
+    }).then(params => {
       // Get GraphQL params from the request and POST body data.
       query = params.query;
       variables = params.variables;
@@ -298,32 +300,19 @@ function graphqlHTTP(options: Options): Middleware {
       if (result && result.errors) {
         (result: any).errors = result.errors.map(formatErrorFn || formatError);
       }
-
       // If allowed to show GraphiQL, present it instead of JSON.
       if (showGraphiQL) {
         const payload = renderGraphiQL({
-          query,
-          variables,
-          operationName,
-          result
+          query, variables,
+          operationName, result
         });
-        return sendResponse(response, 'text/html', payload);
-      }
-
-      // At this point, result is guaranteed to exist, as the only scenario
-      // where it will not is when showGraphiQL is true.
-      if (!result) {
-        throw httpError(500, 'Internal Error');
-      }
-
-      // If "pretty" JSON isn't requested, and the server provides a
-      // response.json method (express), use that directly.
-      // Otherwise use the simplified sendResponse method.
-      if (!pretty && typeof response.json === 'function') {
-        response.json(result);
+        response.setHeader('Content-Type', 'text/html; charset=utf-8');
+        response.end(payload);
       } else {
-        const payload = JSON.stringify(result, null, pretty ? 2 : 0);
-        sendResponse(response, 'application/json', payload);
+        // Server will stringify our response object, we can return it directly
+        const payload = result || '';
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
+        sendResponse(response, payload);
       }
     });
   };
@@ -398,11 +387,26 @@ function canDisplayGraphiQL(
 }
 
 /**
- * Helper function for sending a response using only the core Node server APIs.
+ * Helper function for sending the response data. Use response.send if method
+ * exists and response is a string (express, restify); use response.json if
+ * method exist and response is an object to be stringified by the server
+ * (express, restify); otherwise use response.end (connect).
  */
-function sendResponse(response: $Response, type: string, data: string): void {
-  const chunk = new Buffer(data, 'utf8');
-  response.setHeader('Content-Type', type + '; charset=utf-8');
-  response.setHeader('Content-Length', String(chunk.length));
-  response.end(chunk);
+function sendResponse(
+  response: $Response,
+  data: string | ExecutionResult
+): void {
+  const dataIsString = typeof data === 'string';
+  const dataIsObject = typeof data === 'object';
+  const methodIsFunction = method => typeof method === 'function';
+
+  if (dataIsString && methodIsFunction(response.send)) {
+    return response.send(data);
+  }
+  if (dataIsObject && methodIsFunction(response.json)) {
+    return response.json(data);
+  }
+
+  const returnData = dataIsObject ? JSON.stringify(data) : data;
+  response.end(returnData);
 }
